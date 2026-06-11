@@ -1,7 +1,13 @@
 """Smoke-test Arabic notebooks by executing code cells."""
 import json
 import os
+import sys
 import traceback
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 import matplotlib
 
@@ -10,12 +16,12 @@ import matplotlib.pyplot as plt
 
 plt.show = lambda *args, **kwargs: None
 
-BASE = r"c:\Users\A7MED\Desktop\New folder (32)\Regression_Arabic"
-os.chdir(BASE)
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def run_notebook(name: str) -> None:
-    path = os.path.join(BASE, name)
+def run_notebook(nb_dir: str, name: str) -> None:
+    os.chdir(nb_dir)
+    path = os.path.join(nb_dir, name)
     with open(path, encoding="utf-8") as f:
         nb = json.load(f)
     print(f"\n=== {name} ({len(nb['cells'])} cells) ===")
@@ -36,7 +42,17 @@ def run_notebook(name: str) -> None:
             raise
 
 
-if __name__ == "__main__":
-    for nb in ["Simple_linear_regression.ipynb", "SVR_regression.ipynb"]:
-        run_notebook(nb)
+def main() -> None:
+    targets = sys.argv[1:] if len(sys.argv) > 1 else [
+        "Regression_Arabic/Simple_linear_regression.ipynb",
+        "Regression_Arabic/SVR_regression.ipynb",
+    ]
+    for rel in targets:
+        parts = rel.replace("\\", "/").split("/")
+        nb_dir = os.path.join(BASE, parts[0])
+        run_notebook(nb_dir, parts[1])
     print("\nSmoke tests passed.")
+
+
+if __name__ == "__main__":
+    main()
